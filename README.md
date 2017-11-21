@@ -1,4 +1,4 @@
-# blu-shL
+# blue-shL
 ## Taking The shL
 
-bad, large, unnecessary shelL
+bad, large, unnecessarily extra shelL
