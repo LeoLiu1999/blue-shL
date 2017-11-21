@@ -1,4 +1,4 @@
 # blu-shL
-## TAKING THE SHELL
+## Taking The shL
 
 bad, large, unnecessary shelL
