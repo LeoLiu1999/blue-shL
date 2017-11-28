@@ -20,16 +20,14 @@ char **parse_args(char * line){
 void execute(char * line){
   char **chargs = parse_args(line);
   execvp(chargs[0], chargs);
-  
 }
 
 int main(){
+  char *s = (char *)malloc(101);
   while ( 1 ){
-    char s[101];
-    fgets(s, 100, STDIN_FILENO);
+    fgets(s, 100, stdin);
     execute(s);
-    
   }
-
+  free(s);
   return 0;
 }

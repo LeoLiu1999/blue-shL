@@ -9,3 +9,6 @@ clean:
 
 debug: c.c
 	gcc -o debug -g c.c
+
+valgrind: debug
+	valgrind ./debug
