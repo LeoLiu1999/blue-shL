@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DEBUGGING 0 //Set to 1/0 as appropriate
+#define DEBUGGING 1 //Set to 1/0 as appropriate
 
 char **parse_args(char * line, char *delimiter){
   char **ret = malloc(100);
@@ -17,23 +17,33 @@ char **parse_args(char * line, char *delimiter){
   char * args;
   while( args = strsep(&line, delimiter))
     ret[i++]=args;
+  ret[i] = 0;
   return ret;
 }
 
 void execute_single(char * line){
+  if (!line)
+    return;
+
+  // Remove extra chars
+  while (*line == ' ' || *line == '\n')
+    line++;
+
+
   int f = fork(); // Fork off a child to exec commands
+  printf("f: %d\n", f);
 
   if (!f) {
-    // Remove newline
-    *strchr(line, '\n') = 0;
 
     char **chargs = parse_args(line, " ");
 
     if (DEBUGGING) { // Print debug info
       printf("Executing \"%s\" with the following parameters\n", chargs[0]);
-      unsigned char i = 1;
-      while (chargs[i])
-        printf("%s\n", chargs[i++]);
+      int i = 1;
+      while (chargs[i]) {
+        printf("%s\n", chargs[i]);
+        i++;
+      }
       printf("\n");
     }
 
@@ -44,12 +54,25 @@ void execute_single(char * line){
 }
 
 void execute(char * line) {
+  if (line)
+    *strchr(line, '\n') = 0;
+  else
+    return;
+
   char **cmds = parse_args(line, ";");
   unsigned char i = 0;
-  while (cmds[i]) {
-    printf("%s\n", cmds[i] );
-    execute_single(cmds[i++]);
 
+  if (DEBUGGING) {
+    while(cmds[i++])
+      printf("CMDS[%d]: %s\n", i, cmds[i]);
+    i = 0;
+    printf("\n\n");
+  }
+
+  while (cmds[i++]) {
+    printf("%d\n", i);
+    execute_single(cmds[i]);
+    printf("\n\n");
   }
 }
 
