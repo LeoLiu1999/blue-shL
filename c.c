@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DEBUGGING 1 //Set to 1/0 as appropriate
+#define DEBUGGING 0 //Set to 1/0 as appropriate
 
 char **parse_args(char * line, char *delimiter){
   char **ret = malloc(100);
@@ -21,6 +21,17 @@ char **parse_args(char * line, char *delimiter){
   return ret;
 }
 
+void special_funcs(char ** chargs) {
+  char *cmd = chargs[0];
+
+  if (DEBUGGING) printf("Special function \"%s\" to be executed\n", cmd);
+
+  if (!strcmp(cmd, "cd"))
+    chdir(chargs[2]);
+  else if (!strcmp(cmd, "exit"))
+    exit(0);
+}
+
 void execute_single(char * line){
   if (!line)
     return;
@@ -29,13 +40,13 @@ void execute_single(char * line){
   while (*line == ' ' || *line == '\n')
     line++;
 
+  char **chargs = parse_args(line, " ");
+  if (!( strcmp(chargs[0],"cd") && strcmp(chargs[0], "exit")))
+    return special_funcs(chargs);
 
   int f = fork(); // Fork off a child to exec commands
-  printf("f: %d\n", f);
 
   if (!f) {
-
-    char **chargs = parse_args(line, " ");
 
     if (DEBUGGING) { // Print debug info
       printf("Executing \"%s\" with the following parameters\n", chargs[0]);
@@ -63,25 +74,28 @@ void execute(char * line) {
   unsigned char i = 0;
 
   if (DEBUGGING) {
+    printf("All commands to be run:\n");
     while(cmds[i++])
       printf("CMDS[%d]: %s\n", i, cmds[i]);
     i = 0;
     printf("\n\n");
   }
 
-  while (cmds[i++]) {
-    printf("%d\n", i);
+  while (cmds[i++])
     execute_single(cmds[i]);
-    printf("\n\n");
-  }
+}
+
+void prompt_user(char * buf) {
+  char wd[100];
+  printf("\e[36mblue-shL:\e[33m%s\e[37m$ ", getcwd(wd, 100));
+  fgets(buf, 100, stdin);
 }
 
 int main(){
   char *s = (char *)malloc(101);
   while ( 1 ){
-    printf("blue-shL $ ");
-    fgets(s, 100, stdin);
-    execute(s); //TODO Handle spaces
+    prompt_user(s);
+    execute(s);
   }
   free(s);
   return 0;

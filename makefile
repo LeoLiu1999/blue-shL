@@ -5,7 +5,7 @@ run: all
 	./shell
 
 clean:
-	rm shell *~
+	rm shell debug *~
 
 debug: c.c
 	gcc -o debug -g c.c
