@@ -14,7 +14,7 @@
 //changes STDIN_FILENO to target
 int redirect_stdin(char* target){
   int fd = open(target, O_CREAT || O_WRONLY);
-  int fd_stdin = dup(STDIN_FILENO);  
+  int fd_stdin = dup(STDIN_FILENO);
   dup2( fd, STDIN_FILENO);
   return fd_stdin;
 }
@@ -23,7 +23,7 @@ int redirect_stdin(char* target){
 //changes STDOUT_FILENO to target
 int redirect_stdout(char* target){
   int fd = open(target, O_CREAT || O_WRONLY);
-  int fd_stdin = dup(STDIN_FILENO);  
+  int fd_stdin = dup(STDIN_FILENO);
   dup2( fd, STDIN_FILENO);
   return fd_stdin;
 }
@@ -53,7 +53,7 @@ void special_funcs(char ** chargs) {
   if (!strcmp(cmd, "cd"))
     chdir(chargs[2]);
   else if (!strcmp(cmd, "exit"))
-    exit(0);    
+    exit(0);
 }
 
 void execute_single(char * line){
@@ -83,16 +83,19 @@ void execute_single(char * line){
       printf("\n");
     }
     
-    i = 1; // scan for redirects
-    while (chargs[i++]){
-      if(*chargs[i] == '<')
-	redirect_stdin(chargs[i++]);
-      else if(*chargs[i] == '>')
-	redirect_stdout(chargs[i++]);
-      else
-    	execvp(chargs[0], chargs + 1);
+    // chargs[0] = ls
+    // chargs[i] = -l
+
+    //TODO check if redirect works
+    i = 0; // scan for redirects
+    while (chargs[++i]){
+      if(!strcmp(chargs[i],"<"))
+        redirect_stdin(chargs[i]);
+      else if(!strcmp(chargs[i],">")) {
+        printf("Redirecting \"%s\" to \"%s\"\n", chargs[i-1], chargs[i+1]);
+        redirect_stdout(chargs[i]); }
     }
-    //just realized that there's no need to reset the data table since it is only in the child :(
+    execvp(chargs[0], chargs + 1);
   }
 
   wait(&f);
@@ -116,7 +119,7 @@ void execute(char * line) {
   }
 
   while (cmds[i++]){
-      execute_single(cmds[i]);
+    execute_single(cmds[i]);
   }
 }
 
