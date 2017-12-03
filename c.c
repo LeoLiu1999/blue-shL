@@ -71,18 +71,28 @@ void execute_single(char * line){
   int f = fork(); // Fork off a child to exec commands
 
   if (!f) {
-
+    int i;
+    
     if (DEBUGGING) { // Print debug info
       printf("Executing \"%s\" with the following parameters\n", chargs[0]);
-      int i = 1;
+      i = 1;
       while (chargs[i]) {
         printf("%s\n", chargs[i]);
         i++;
       }
       printf("\n");
     }
-
-    execvp(chargs[0], chargs + 1);
+    
+    i = 1; // scan for redirects
+    while (chargs[i++]){
+      if(*chargs[i] == '<')
+	redirect_stdin(chargs[i++]);
+      else if(*chargs[i] == '>')
+	redirect_stdout(chargs[i++]);
+      else
+    	execvp(chargs[0], chargs + 1);
+    }
+    //just realized that there's no need to reset the data table since it is only in the child :(
   }
 
   wait(&f);
@@ -106,11 +116,6 @@ void execute(char * line) {
   }
 
   while (cmds[i++]){
-    if(*cmds[i] == '<')
-      redirect_stdin(cmds[i++]);
-    else if(*cmds[i] == '>')
-      redirect_stdout(cmds[i++]);
-    else
       execute_single(cmds[i]);
   }
 }
