@@ -7,31 +7,27 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
-#define DEBUGGING 1 //Set to 1/0 as appropriate
+#define DEBUGGING 0 //Set to 1/0 as appropriate
 
 //returns the new fileno of stdin
 //changes STDIN_FILENO to target
-int redirect_stdin(char* target){
-  int fd = open(target, O_CREAT || O_WRONLY);
-  int fd_stdin = dup(STDIN_FILENO);
-  dup2( fd, STDIN_FILENO);
-  return fd_stdin;
+void redirect_stdin(char** chargs, int i){
+  int inFile = open(chargs[i+1], O_RDONLY);
+  dup2( inFile, STDIN_FILENO);
+  while (chargs[i]){
+    chargs[i] = chargs[i+2];
+    i++;}
 }
 
-//returns the new fileno of stdout
-//changes STDOUT_FILENO to target
-int redirect_stdout(char* target){
-  int fd = open(target, O_CREAT || O_WRONLY);
-  int fd_stdin = dup(STDIN_FILENO);
-  dup2( fd, STDIN_FILENO);
-  return fd_stdin;
-}
 
-//resets the data table
-void redirect_reset(int stdin, int stdout){
-  dup2( stdin, STDIN_FILENO);
-  dup2( stdin, STDOUT_FILENO);
+void redirect_stdout(char** chargs, int i){
+  int outFile = open(chargs[i+1], O_CREAT | O_WRONLY, 0744);
+  dup2( outFile, STDOUT_FILENO);
+  while (chargs[i]){
+    chargs[i] = chargs[i+2];
+    i++;}
 }
 
 char **parse_args(char * line, char *delimiter){
@@ -39,8 +35,8 @@ char **parse_args(char * line, char *delimiter){
   ret[0]=line;
   unsigned char i = 1;
   char * args;
-  while( args = strsep(&line, delimiter))
-    ret[i++]=args;
+  while( (args = strsep(&line, delimiter)))
+    ret[i++] = args;
   ret[i] = 0;
   return ret;
 }
@@ -53,7 +49,7 @@ void special_funcs(char ** chargs) {
   if (!strcmp(cmd, "cd"))
     chdir(chargs[2]);
   else if (!strcmp(cmd, "exit"))
-    exit(0);
+    exit(0); //sometimes doesn't work?
 }
 
 void execute_single(char * line){
@@ -73,8 +69,23 @@ void execute_single(char * line){
   if (!f) {
     int i;
     
+    i = 1; // scan for redirects
+    while (chargs[i]){
+      if(!strcmp(chargs[i],"<")) {
+        if (DEBUGGING) printf("Redirecting input of \"%s\" from \"%s\"\n", chargs[i-1], chargs[i+1]);
+        redirect_stdin(chargs, i);
+        break;
+      }
+      else if(!strcmp(chargs[i],">")) {
+        if (DEBUGGING) printf("Redirecting output of \"%s\" to \"%s\"\n", chargs[i-1], chargs[i+1]);
+        redirect_stdout(chargs, i);
+        break;
+      }
+      i++;
+    }
+
     if (DEBUGGING) { // Print debug info
-      printf("Executing \"%s\" with the following parameters\n", chargs[0]);
+      printf("Executing \"%s\" with the following parameters:\n", chargs[0]);
       i = 1;
       while (chargs[i]) {
         printf("%s\n", chargs[i]);
@@ -83,18 +94,6 @@ void execute_single(char * line){
       printf("\n");
     }
     
-    // chargs[0] = ls
-    // chargs[i] = -l
-
-    //TODO check if redirect works
-    i = 0; // scan for redirects
-    while (chargs[++i]){
-      if(!strcmp(chargs[i],"<"))
-        redirect_stdin(chargs[i]);
-      else if(!strcmp(chargs[i],">")) {
-        printf("Redirecting \"%s\" to \"%s\"\n", chargs[i-1], chargs[i+1]);
-        redirect_stdout(chargs[i]); }
-    }
     execvp(chargs[0], chargs + 1);
   }
 
@@ -119,6 +118,8 @@ void execute(char * line) {
   }
 
   while (cmds[i++]){
+    //int fd = open("./foo", O_CREAT | O_RDWR, 0744);
+    //printf("FD: %d, ERRNO: %d\n", fd, errno);
     execute_single(cmds[i]);
   }
 }
