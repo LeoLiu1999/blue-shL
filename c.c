@@ -88,8 +88,6 @@ void execute_single(char * line){
   wait(&f);
 }
 
-
-
 void execute(char * line) {
   if (line)
     *strchr(line, '\n') = 0;
@@ -107,8 +105,14 @@ void execute(char * line) {
     printf("\n\n");
   }
 
-  while (cmds[i++])
-    execute_single(cmds[i]);
+  while (cmds[i++]){
+    if(*cmds[i] == '<')
+      redirect_stdin(cmds[i++]);
+    else if(*cmds[i] == '>')
+      redirect_stdout(cmds[i++]);
+    else
+      execute_single(cmds[i]);
+  }
 }
 
 void prompt_user(char * buf) {
