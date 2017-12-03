@@ -8,7 +8,31 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DEBUGGING 0 //Set to 1/0 as appropriate
+#define DEBUGGING 1 //Set to 1/0 as appropriate
+
+//returns the new fileno of stdin
+//changes STDIN_FILENO to target
+int redirect_stdin(char* target){
+  int fd = open(target, O_CREAT || O_WRONLY);
+  int fd_stdin = dup(STDIN_FILENO);  
+  dup2( fd, STDIN_FILENO);
+  return fd_stdin;
+}
+
+//returns the new fileno of stdout
+//changes STDOUT_FILENO to target
+int redirect_stdout(char* target){
+  int fd = open(target, O_CREAT || O_WRONLY);
+  int fd_stdin = dup(STDIN_FILENO);  
+  dup2( fd, STDIN_FILENO);
+  return fd_stdin;
+}
+
+//resets the data table
+void redirect_reset(int stdin, int stdout){
+  dup2( stdin, STDIN_FILENO);
+  dup2( stdin, STDOUT_FILENO);
+}
 
 char **parse_args(char * line, char *delimiter){
   char **ret = malloc(100);
@@ -29,7 +53,7 @@ void special_funcs(char ** chargs) {
   if (!strcmp(cmd, "cd"))
     chdir(chargs[2]);
   else if (!strcmp(cmd, "exit"))
-    exit(0);
+    exit(0);    
 }
 
 void execute_single(char * line){
@@ -63,6 +87,8 @@ void execute_single(char * line){
 
   wait(&f);
 }
+
+
 
 void execute(char * line) {
   if (line)
