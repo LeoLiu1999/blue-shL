@@ -128,7 +128,11 @@ void execute_single(char * line){
 }
 
 
-// Main wrapper for function execution, preps input to be executed
+/**
+ * Main wrapper for function execution, preps input to be executed
+ * Inputs:
+ *   line: The command(s) to be executed
+ **/
 void execute(char * line) {
   if (line) // Remove trailing newline, and ignore null cmds
     *strchr(line, '\n') = 0;
